@@ -108,7 +108,7 @@ def split_dataset(X, y, train_ratio=0.7, val_ratio=0.15):
     )
 
 
-folder = "C:\תלפיות\סמסטר ד\DS_ML\For Students\Train Set (Labeled)"
+folder = r"C:\Users\TLP-001\PycharmProjects\DS_ML-1\For Students\Train Set (Labeled)"
 
 X, y = load_dataset(folder)
 
