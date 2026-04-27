@@ -25,9 +25,7 @@ class AdvancedSoftmaxRegression:
         return oh
 
     def preprocess(self, X):
-        # vectorized flatten + normalization
-        X_flat = X.reshape(len(X), -1)
-        return X_flat / 255.0  # normalize pixels
+        return X  # DO NOTHING HERE
 
     def forward(self, X):
         return self.softmax(X @ self.W + self.b)
