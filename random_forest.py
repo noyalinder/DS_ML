@@ -131,12 +131,60 @@ def split_dataset(X, y, train_ratio=0.7, val_ratio=0.01):
     )
 
 
+def augment_dataset(X, y, img_size=(34, 34), factor=1):
+    h, w = img_size
+    img_len = h * w
+
+    X_aug = []
+    y_aug = []
+
+    for i in range(len(X)):
+        img = X[i][:img_len].reshape(h, w)
+        label = y[i]
+
+        for _ in range(factor):
+            # small transforms
+            angle = np.random.uniform(-8, 8)
+            tx = np.random.uniform(-2, 2)
+            ty = np.random.uniform(-2, 2)
+
+            M = cv2.getRotationMatrix2D((w//2, h//2), angle, 1.0)
+            M[:, 2] += [tx, ty]
+
+            transformed = cv2.warpAffine(
+                img, M, (w, h),
+                borderMode=cv2.BORDER_REFLECT
+            )
+
+            # re-normalize
+            transformed = transformed - np.mean(transformed)
+            transformed = transformed / (np.std(transformed) + 1e-8)
+
+            # recompute edges
+            gx = cv2.Sobel(transformed, cv2.CV_32F, 1, 0, ksize=3)
+            gy = cv2.Sobel(transformed, cv2.CV_32F, 0, 1, ksize=3)
+            edges = np.sqrt(gx**2 + gy**2)
+            edges = edges / (np.max(edges) + 1e-8)
+
+            combined = np.concatenate([transformed.flatten(), edges.flatten()])
+
+            X_aug.append(combined)
+            y_aug.append(label)
+
+    return np.array(X_aug), np.array(y_aug)
+
 # ---------- LOAD ----------
-folder = r"C:\תלפיות\סמסטר ד\DS_ML\For Students\Train Set (Labeled)"
+folder = r"For Students\\Train Set (Labeled)"
 
 X, y = load_dataset(folder)
 
 X_train, y_train, X_val, y_val, X_test, y_test = split_dataset(X, y)
+
+X_aug, y_aug = augment_dataset(X_train, y_train, factor=1)
+
+# combine original + augmented
+X_train = np.vstack([X_train, X_aug])
+y_train = np.concatenate([y_train, y_aug])
 
 print("finished loading")
 
