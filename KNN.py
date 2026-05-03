@@ -161,7 +161,11 @@ if __name__ == "__main__":
     print(f"Training on {len(X_train)} samples...")
     
     # Initialize and fit KNN
+<<<<<<< HEAD
     knn = KNN(k=5, metric='l2')
+=======
+    knn = KNN(k=3, metric='l1')
+>>>>>>> f051676abe2c0c588fae925dcc42d9989efd07c2
     knn.fit(X_train, y_train)
     
     # Predict on validation set
@@ -176,3 +180,7 @@ if __name__ == "__main__":
     test_acc = np.mean(test_preds == y_test)
     print(f"Test Accuracy: {test_acc:.4f}")
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> f051676abe2c0c588fae925dcc42d9989efd07c2

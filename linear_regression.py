@@ -34,6 +34,7 @@ def remove_gray_border(img, tol=63):
     return img[y0:y1+1, x0:x1+1]
 
 
+<<<<<<< HEAD
 # ---------- PREPROCESS ----------
 def preprocess_image(path, size=IMG_SIZE):
     # load grayscale
@@ -50,6 +51,46 @@ def preprocess_image(path, size=IMG_SIZE):
     img = img.astype(np.float32) / 255.0
 
     return img
+=======
+# ---------- EDGE FEATURES (IMPORTANT ADDITION) ----------
+def extract_edges(img):
+    img = img.astype(np.float32)
+
+    gx = cv2.Sobel(img, cv2.CV_32F, 1, 0, ksize=3)
+    gy = cv2.Sobel(img, cv2.CV_32F, 0, 1, ksize=3)
+
+    mag = np.sqrt(gx**2 + gy**2)
+    return mag
+
+
+# ---------- PREPROCESS ----------
+def preprocess_image(path, size=IMG_SIZE):
+    img = Image.open(path).convert("L")
+    img = np.array(img).astype(np.float32)
+
+    # 1. crop border
+    img = remove_gray_border(img, tol=63)
+
+    # 2. resize
+    img = cv2.resize(img, size)
+
+    # 3. per-image centering (IMPORTANT)
+    img = img - np.mean(img)
+
+    # 4. contrast normalization (IMPORTANT)
+    img = img / (np.std(img) + 1e-8)
+
+    # 5. edge features (IMPORTANT)
+    edges = extract_edges(img)
+
+    # normalize edges
+    edges = edges / (np.max(edges) + 1e-8)
+
+    # 6. combine features (still linear model!)
+    combined = np.concatenate([img.flatten(), edges.flatten()])
+
+    return combined
+>>>>>>> f051676abe2c0c588fae925dcc42d9989efd07c2
 
 
 # ---------- SINGLE WORKER ----------
@@ -65,7 +106,10 @@ def load_one(args):
 
 # ---------- DATASET LOADER ----------
 def load_dataset(folder, use_cache=True):
+<<<<<<< HEAD
     # ---- cache ----
+=======
+>>>>>>> f051676abe2c0c588fae925dcc42d9989efd07c2
     if use_cache and os.path.exists(CACHE_X) and os.path.exists(CACHE_Y):
         print("Loading from cache...")
         return np.load(CACHE_X), np.load(CACHE_Y)
@@ -74,16 +118,25 @@ def load_dataset(folder, use_cache=True):
 
     files = sorted([f for f in os.listdir(folder) if f.endswith(".pgm")])
 
+<<<<<<< HEAD
     # ---- parallel loading ----
+=======
+>>>>>>> f051676abe2c0c588fae925dcc42d9989efd07c2
     with ThreadPoolExecutor() as executor:
         data = list(executor.map(load_one, [(folder, f) for f in files]))
 
     X, y = zip(*data)
 
+<<<<<<< HEAD
     X = np.stack(X)   # (N, 34, 34)
     y = np.array(y)
 
     # ---- cache ----
+=======
+    X = np.stack(X)
+    y = np.array(y)
+
+>>>>>>> f051676abe2c0c588fae925dcc42d9989efd07c2
     if use_cache:
         np.save(CACHE_X, X)
         np.save(CACHE_Y, y)
@@ -108,13 +161,20 @@ def split_dataset(X, y, train_ratio=0.7, val_ratio=0.15):
     )
 
 
+<<<<<<< HEAD
 # folder = "C:\תלפיות\סמסטר ד\DS_ML\For Students\Train Set (Labeled)"
 folder = r"C:/Users/TLP-001/PycharmProjects/DS_ML/For_Students/Train_Set_(Labeled)"
+=======
+# ---------- LOAD ----------
+folder = r"C:\תלפיות\סמסטר ד\DS_ML\For Students\Train Set (Labeled)"
+
+>>>>>>> f051676abe2c0c588fae925dcc42d9989efd07c2
 X, y = load_dataset(folder)
 
 X_train, y_train, X_val, y_val, X_test, y_test = split_dataset(X, y)
 
 print("finished loading")
+<<<<<<< HEAD
 print(X_train[0])
 
 model = AdvancedSoftmaxRegression(
@@ -125,12 +185,42 @@ model = AdvancedSoftmaxRegression(
     momentum=0.9   # helps convergence
 )
 
+=======
+
+# ---------- GLOBAL STANDARDIZATION (CRITICAL FIX) ----------
+mean = np.mean(X_train, axis=0)
+std = np.std(X_train, axis=0) + 1e-8
+
+X_train = (X_train - mean) / std
+X_val   = (X_val - mean) / std
+X_test  = (X_test - mean) / std
+
+X_train = X_train.reshape(len(X_train), -1)
+X_val = X_val.reshape(len(X_val), -1)
+X_test = X_test.reshape(len(X_test), -1)
+
+
+print("feature std:", np.mean(np.std(X_train, axis=1)))
+
+
+# ---------- MODEL ----------
+model = AdvancedSoftmaxRegression(
+    input_dim=X_train.shape[1],
+    num_classes=28,
+    lr=0.1,
+    reg=1e-3,
+    momentum=0.9
+)
+
+# ---------- TRAIN ----------
+>>>>>>> f051676abe2c0c588fae925dcc42d9989efd07c2
 model.train(
     X_train,
     y_train,
     X_val,
     y_val,
     epochs=200,
+<<<<<<< HEAD
     batch_size=64   # new parameter
 )
 
@@ -143,3 +233,14 @@ preds = model.predict(X_test)
 acc = np.mean(preds == y_test)
 
 print("Testing accuracy:", acc)
+=======
+    batch_size=64
+)
+
+# ---------- EVAL ----------
+preds = model.predict(X_train)
+print("Training accuracy:", np.mean(preds == y_train))
+
+preds = model.predict(X_test)
+print("Testing accuracy:", np.mean(preds == y_test))
+>>>>>>> f051676abe2c0c588fae925dcc42d9989efd07c2
